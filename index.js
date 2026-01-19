@@ -48,6 +48,9 @@ app.post("/v1/chat/completions", async (req, res) => {
 
     const data = await response.json();
 
+console.log("STATUS GEMINI:", response.status);
+console.log("RESPUESTA GEMINI:", JSON.stringify(data, null, 2));
+
     res.status(200).json({
       id: "chatcmpl-janitor",
       object: "chat.completion",

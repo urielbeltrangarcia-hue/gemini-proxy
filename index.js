@@ -4,8 +4,18 @@ import cors from "cors";
 
 const app = express();
 
-app.use(cors()); 
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(express.json());
+
+// 👇 MANEJAR PREFLIGHT (CLAVE PARA JANITOR WEB)
+app.options("*", (req, res) => {
+  res.sendStatus(200);
+});
 
 const PORT = process.env.PORT || 3000;
 
@@ -16,14 +26,15 @@ app.get("/", (req, res) => {
 app.post("/v1/chat/completions", async (req, res) => {
   try {
     const messages = req.body.messages || [];
-
     const prompt = messages.map(m => m.content).join("\n");
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({
           contents: [
             {
@@ -36,8 +47,8 @@ app.post("/v1/chat/completions", async (req, res) => {
 
     const data = await response.json();
 
-    res.json({
-      id: "chatcmpl-proxy",
+    res.status(200).json({
+      id: "chatcmpl-janitor",
       object: "chat.completion",
       choices: [
         {
@@ -53,7 +64,7 @@ app.post("/v1/chat/completions", async (req, res) => {
       ]
     });
   } catch (err) {
-    console.error(err);
+    console.error("Proxy error:", err);
     res.status(500).json({ error: err.message });
   }
 });
